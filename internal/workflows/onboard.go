@@ -40,8 +40,11 @@ func OnboardMac(ctx workflow.Context, req data.OnboardRequest) (string, error) {
 	}
 
 	// Activity #3: Persist in DB
-	// TODO
-
+	var dbResult string
+	dbSaveError := workflow.ExecuteActivity(ctx, activities.SaveToDb, info).Get(ctx, &dbResult)
+	if dbSaveError != nil {
+		return "", dbSaveError
+	}
 
 	result := fmt.Sprintf(
 		"Found %s/%s, chassis ID %s, processor: %s, memory: %f GiB",

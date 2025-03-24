@@ -11,6 +11,19 @@ services:
       - ./.:/image
     privileged: true     # Needs to bind to privileged ports
     network_mode: "host" # Needs access to host network
+  cp_postgres:
+    container_name: cp_postgres
+    environment:
+      POSTGRES_PASSWORD: controlplane
+      POSTGRES_USER: controlplane
+      POSTGRES_DB: controlplane
+    image: postgres:16
+    networks:
+      - temporal-network
+    ports:
+      - 5432:5432
+    volumes:
+      - /var/lib/postgresql/data # no persistence
 
   # Everything below is from temporal/docker-compose.git
   postgresql:

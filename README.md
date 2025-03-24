@@ -5,9 +5,12 @@ Basic implementation of [Railway](https://railway.app) ["Zero-Touch Bare Metal a
 ## TODO
 
 - Set up DB
-- Scrape data from Redfish and dump to a DB?
+  - Migration script
+  - Proper client setup
+  - Read data during boot process
 - Actually customize Kernel line based on Redfish data
 - Create docs on launching workflows in Temporal UI
+- Implement RedFish auth
 
 ## Sequence Diagram
 

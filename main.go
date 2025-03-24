@@ -96,6 +96,7 @@ func main() {
 		w.RegisterWorkflow(workflows.OnboardMac)
 		w.RegisterActivity(activities.MacToIp)
 		w.RegisterActivity(activities.ScrapeFromRedFish)
+		w.RegisterActivity(activities.SaveToDb)
 
 		err = w.Run(worker.InterruptCh())
 		if err != nil {

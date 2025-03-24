@@ -1,0 +1,17 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "query.sql"
+    schema: "schema.sql"
+    gen:
+      go:
+        package: "sql"
+        out: "sql"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        overrides:
+          - column: "hardwareinfo.info"
+            go_type:
+              import: "github.com/Antvirf/metal-control-plane/internal/data"
+              package: "data"
+              type: "HardwareInfo"
