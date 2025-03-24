@@ -4,15 +4,6 @@ Basic implementation of [Railway](https://railway.app) ["Zero-Touch Bare Metal a
 
 ## TODO
 
-- Host Redfish mock API on some machine
-- Scrape data from RedFish APIs - probably use <https://github.com/stmcginnis/gofish> instead of rawdogging it
-  - <http://localhost:5000/redfish/v1/Systems/437XR1138R2>
-  - <http://localhost:5000/redfish/v1/Systems/437XR1138R2/Bios>
-  - <http://localhost:5000/redfish/v1/Systems/437XR1138R2/Processors>
-  - <http://localhost:5000/redfish/v1/Systems/437XR1138R2/Memory>
-  - <http://localhost:5000/redfish/v1/Systems/437XR1138R2/EthernetInterfaces>
-  - <http://localhost:5000/redfish/v1/Systems/437XR1138R2/SimpleStorage>
-  - <http://localhost:5000/redfish/v1/Systems/437XR1138R2/LogServices>
 - Set up DB
 - Scrape data from Redfish and dump to a DB?
 - Actually customize Kernel line based on Redfish data
@@ -60,7 +51,10 @@ end
 1. Run RedFish emulator on your 'BMC' host:
 
     ```bash
-    docker run --rm -p 5000:5000 dmtf/redfish-interface-emulator:latest
+    # in case you want to build the container, in case your host is e.g. arm64 like a Raspberry Pi
+    podman build -t dmtf/redfish-interface-emulator:latest https://github.com/DMTF/Redfish-Interface-Emulator.git
+
+    podman run --rm --detach --name redfish-emulator -p 5000:5000 dmtf/redfish-interface-emulator:latest
     ```
 
 1. Get the MAC address of the BMC host

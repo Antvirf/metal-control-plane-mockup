@@ -95,6 +95,7 @@ func main() {
 		w := worker.New(c, QUEUE_NAME, worker.Options{})
 		w.RegisterWorkflow(workflows.OnboardMac)
 		w.RegisterActivity(activities.MacToIp)
+		w.RegisterActivity(activities.ScrapeFromRedFish)
 
 		err = w.Run(worker.InterruptCh())
 		if err != nil {

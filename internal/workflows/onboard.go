@@ -2,6 +2,7 @@ package workflows
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"time"
 
@@ -32,9 +33,25 @@ func OnboardMac(ctx workflow.Context, req data.OnboardRequest) (string, error) {
 	}
 
 	// Activity #2: Scrape this IP for information from RedFish
+	var info data.HardwareInfo
+	bmcScrapingError := workflow.ExecuteActivity(ctx, activities.ScrapeFromRedFish, targetIp, req.MacAddress).Get(ctx, &info)
+	if bmcScrapingError != nil {
+		return "", bmcScrapingError
+	}
 
 	// Activity #3: Persist in DB
+	// TODO
 
-	result := fmt.Sprintf("Machine '%s' onboarded successfully, IP: '%s'", req.MacAddress, targetIp)
+
+	result := fmt.Sprintf(
+		"Found %s/%s, chassis ID %s, processor: %s, memory: %f GiB",
+		info.BmcIpAddress,
+		info.BmcMacAddress,
+		info.RedFishData.Chassis.ID,
+		info.RedFishData.Processors[0].Model,
+		info.RedFishData.System.MemorySummary.TotalSystemMemoryGiB,
+	)
+
+	log.Printf("Machine '%s' onboarded successfully, IP: '%s'", req.MacAddress, targetIp)
 	return result, nil
 }

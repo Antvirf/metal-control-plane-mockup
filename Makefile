@@ -1,6 +1,6 @@
 .PHONY: containers
 containers:
-	cd compose && docker-compose up --build
+	cd compose && docker compose up --build
 
 
 .PHONY: worker

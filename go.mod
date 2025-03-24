@@ -6,6 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/paultyng/go-unifi v1.34.0
+	github.com/stmcginnis/gofish v0.20.0
 	github.com/unpoller/unifi/v5 v5.1.0
 	go.temporal.io/sdk v1.33.0
 )
