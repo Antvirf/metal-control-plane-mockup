@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/Antvirf/metal-control-plane/internal/clients"
 )
 
 type ServerConfigResponse struct {
@@ -26,9 +28,11 @@ const (
 	ST_COMPUTE_G1 ServerType = iota
 	ST_COMPUTE_G2
 	DEFAULT
+	IGNORE
 )
 
-// TODO: Implement proper server configs lookup, based on data from Redfish
+// Hardcoded map of SERVER TYPE --> Boot configs
+// You'd probably want to control this from a DB in a real implementation, or from a mountable config file.
 var (
 	SERVER_MAC_TO_TYPE = map[string]ServerType{
 		// Must provide MACs in upper case.
@@ -42,18 +46,54 @@ var (
 			},
 			Cmdline: "selinux=0 inst.repo=https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os inst.text",
 		},
+		ST_COMPUTE_G2: ServerConfigResponse{
+			Kernel: "https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/images/pxeboot/vmlinuz",
+			Initrd: []string{
+				"https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/images/pxeboot/initrd.img",
+			},
+			Cmdline: "selinux=1 inst.repo=https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os inst.text",
+		},
 		DEFAULT: ServerConfigResponse{
 			IpxeScript: "#!ipxe\nchain --autofree http://boot.netboot.xyz/ipxe/netboot.xyz.lkrn",
 		},
 	}
 )
 
-func findConfig(mac string) (ServerType, ServerConfigResponse, error) {
-	// Dumb logic against a hardcoded map for now
-	serverType, found := SERVER_MAC_TO_TYPE[strings.ToUpper(mac)]
+func findConfig(mac net.HardwareAddr) (ServerType, ServerConfigResponse, error) {
+	var serverType ServerType
+	// Implementation #1: Hardcoded logic against a map
+	// serverType, found := SERVER_MAC_TO_TYPE[strings.ToUpper(mac)]
+	// if !found {
+	// 	serverType = DEFAULT
+	// }
+
+	// Implementation #2: Get machine info from DB, and then figure out what boot configs
+	// the machine should get based on its hardware configuration.
+	hardwareInfo, found, err := clients.GetHardwareInfo(mac)
+	if err != nil {
+		// In case of an actual error, return "IGNORE"
+		return IGNORE, ServerConfigResponse{}, fmt.Errorf("error querying db: %v", err)
+	}
 	if !found {
+		// If no error, but nothing was found, what do you want to do here? Serve DEFAULT, or IGNORE?
+		// For my case, IGNORE. I only want to PXE things that exist in my DB.
+		return IGNORE, ServerConfigResponse{}, fmt.Errorf("DB query returned no results, this machine has not been onboarded", err)
+	}
+
+	// Choosing the server type based on the returned value, toy example
+	processorModel := strings.ToLower(hardwareInfo.RedFishData.Processors[0].Model)
+	switch {
+	case strings.Contains(processorModel, "intel"):
+		log.Printf("assigning mac=%s with type %s", mac.String(), ST_COMPUTE_G1)
+		serverType = ST_COMPUTE_G1
+	case strings.Contains(processorModel, "amd"):
+		log.Printf("assigning mac=%s with type %s", mac.String(), ST_COMPUTE_G2)
+		serverType = ST_COMPUTE_G2
+	default:
+		log.Printf("assigning mac=%s with type %s", mac.String(), DEFAULT)
 		serverType = DEFAULT
 	}
+
 	config, found := SERVER_TYPE_TO_CONFIG[serverType]
 	if !found {
 		return DEFAULT, ServerConfigResponse{}, fmt.Errorf("server type found, but no config defined for type %s", serverType)
@@ -63,10 +103,10 @@ func findConfig(mac string) (ServerType, ServerConfigResponse, error) {
 
 func pixieApiHandler(writer http.ResponseWriter, request *http.Request) {
 	// Extract the last part of the path - this is a mac address
-	macAddress := filepath.Base(request.URL.Path)
+	macAddressRaw := filepath.Base(request.URL.Path)
 
 	// Validate that this is a proper MAC, otherwise complain
-	_, err := net.ParseMAC(macAddress)
+	macAddress, err := net.ParseMAC(macAddressRaw)
 	if err != nil {
 		http.Error(writer, "failed to parse MAC address", http.StatusBadRequest)
 		return

@@ -4,11 +4,10 @@ Basic implementation of [Railway](https://railway.app) ["Zero-Touch Bare Metal a
 
 ## TODO
 
+- Deal with reonboarding case
+- Deal with the fact that BMC address != booting address of the machine. We need to get this info from redfish data
 - Set up DB
   - Migration script
-  - Proper client setup
-  - Read data during boot process
-- Actually customize Kernel line based on Redfish data
 - Create docs on launching workflows in Temporal UI
 - Implement RedFish auth
 

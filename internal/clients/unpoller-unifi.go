@@ -3,19 +3,15 @@ package clients
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/unpoller/unifi/v5"
 )
 
 func SetupUnifiClient(ctx context.Context) (*unifi.Unifi, error) {
-	user := os.Getenv("UNIFI_USERNAME")
-	pass := os.Getenv("UNIFI_PASSWORD")
-	url := os.Getenv("UNIFI_BASE_URL")
 	c := unifi.Config{
-		User: user,
-		Pass: pass,
-		URL:  url,
+		User: UNIFI_USERNAME,
+		Pass: UNIFI_PASSWORD,
+		URL:  UNIFI_BASE_URL,
 	}
 
 	client, err := unifi.NewUnifi(&c)

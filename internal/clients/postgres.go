@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"os"
 
@@ -12,15 +13,9 @@ import (
 )
 
 func WriteHardwareInfo(input data.HardwareInfo) (string, error) {
-	dbUrl := os.Getenv("DATABASE_URL")
-	if dbUrl == "" {
-		dbUrl = "postgres://controlplane:controlplane@localhost/controlplane"
-	}
-
-	conn, err := pgx.Connect(context.Background(), dbUrl)
+	conn, err := pgx.Connect(context.Background(), DATABASE_CONNECTION_STRING)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		return "", fmt.Errorf("unable to connect to database: %v", err)
 	}
 	defer conn.Close(context.Background())
 
@@ -35,23 +30,14 @@ func WriteHardwareInfo(input data.HardwareInfo) (string, error) {
 		os.Exit(1)
 	}
 
-	fmt.Println("wrote to DB!")
-	fmt.Println(record.Mac)
-	fmt.Println(record.Info.BmcIpAddress)
-	fmt.Println(record.Info.RedFishData.Bios)
+	log.Printf("Wrote hardware info to DB for BmcMac '%s'", input.BmcMacAddress.String())
 	return record.Mac, nil
 }
 
-func GetHardwareInfo(mac net.HardwareAddr) {
-	dbUrl := os.Getenv("DATABASE_URL")
-	if dbUrl == "" {
-		dbUrl = "postgres://controlplane:controlplane@localhost/controlplane"
-	}
-
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+func GetHardwareInfo(mac net.HardwareAddr) (*data.HardwareInfo, bool, error) {
+	conn, err := pgx.Connect(context.Background(), DATABASE_CONNECTION_STRING)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		return &data.HardwareInfo{}, false, fmt.Errorf("unable to connect to database: %v", err)
 	}
 	defer conn.Close(context.Background())
 
@@ -59,11 +45,8 @@ func GetHardwareInfo(mac net.HardwareAddr) {
 
 	record, err := query.GetHardwareInfo(context.Background(), mac.String())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "No match found: %v\n", err)
-		os.Exit(1)
+		return &data.HardwareInfo{}, false, nil
 	}
-
-	fmt.Println(record.Mac)
-	fmt.Println(record.Info.BmcIpAddress)
-	fmt.Println(record.Info.RedFishData.Bios)
+	log.Printf("DB successfully queried for hardware info for BmcMac '%s'", mac.String())
+	return &record.Info, true, nil
 }

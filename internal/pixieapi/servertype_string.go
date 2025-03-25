@@ -11,11 +11,12 @@ func _() {
 	_ = x[ST_COMPUTE_G1-0]
 	_ = x[ST_COMPUTE_G2-1]
 	_ = x[DEFAULT-2]
+	_ = x[IGNORE-3]
 }
 
-const _ServerType_name = "ST_COMPUTE_G1ST_COMPUTE_G2DEFAULT"
+const _ServerType_name = "ST_COMPUTE_G1ST_COMPUTE_G2DEFAULTIGNORE"
 
-var _ServerType_index = [...]uint8{0, 13, 26, 33}
+var _ServerType_index = [...]uint8{0, 13, 26, 33, 39}
 
 func (i ServerType) String() string {
 	if i < 0 || i >= ServerType(len(_ServerType_index)-1) {

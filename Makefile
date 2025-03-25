@@ -11,9 +11,10 @@ worker:
 control-plane:
 	go run main.go -mode controlplane
 
-.PHONY: sqlc
-sqlc:
+.PHONY: generate
+generate:
 	cd internal/ && sqlc generate
+	cd internal/pixieapi && ~/go/bin/stringer -type=ServerType
 
 
 .PHONY: migrate
