@@ -47,10 +47,10 @@ func OnboardMac(ctx workflow.Context, req data.OnboardRequest) (string, error) {
 	}
 
 	result := fmt.Sprintf(
-		"Found %s/%s, chassis ID %s, processor: %s, memory: %f GiB",
+		"Found %s/%s, system ID: %s, processor: %s, memory: %f GiB",
 		info.BmcIpAddress,
 		info.BmcMacAddress,
-		info.RedFishData.Chassis.ID,
+		info.RedFishData.System.ID,
 		info.RedFishData.Processors[0].Model,
 		info.RedFishData.System.MemorySummary.TotalSystemMemoryGiB,
 	)

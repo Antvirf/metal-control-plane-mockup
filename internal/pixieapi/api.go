@@ -86,13 +86,10 @@ func findConfig(mac net.HardwareAddr) (ServerType, ServerConfigResponse, error) 
 	processorModel := strings.ToLower(hardwareInfo.RedFishData.Processors[0].Model)
 	switch {
 	case strings.Contains(processorModel, "intel"):
-		log.Printf("assigning mac=%s with type %s", mac.String(), ST_COMPUTE_G1)
 		serverType = ST_COMPUTE_G1
 	case strings.Contains(processorModel, "amd"):
-		log.Printf("assigning mac=%s with type %s", mac.String(), ST_COMPUTE_G2)
 		serverType = ST_COMPUTE_G2
 	default:
-		log.Printf("assigning mac=%s with type %s", mac.String(), DEFAULT)
 		serverType = DEFAULT
 	}
 

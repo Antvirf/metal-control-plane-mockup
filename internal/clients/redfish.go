@@ -3,6 +3,7 @@ package clients
 import (
 	"github.com/Antvirf/metal-control-plane/internal/data"
 	"github.com/stmcginnis/gofish"
+	"github.com/stmcginnis/gofish/redfish"
 )
 
 func GetRedFishInfo(address string) (*data.RedFishInfo, error) {
@@ -17,18 +18,27 @@ func GetRedFishInfo(address string) (*data.RedFishInfo, error) {
 	chassis, _ := service.Chassis()
 	systems, _ := service.Systems()
 	system := systems[0]
-
 	bios, _ := system.Bios()
 	processors, _ := system.Processors()
 	memory, _ := system.Memory()
 	ethernetDevices, _ := system.EthernetInterfaces()
 	StorageDevices, _ := system.SimpleStorages()
 
+
+	// Filter processors to active sockets only
+	var activeProcessors []*redfish.Processor
+	for _, proc := range processors {
+		if proc.Status.State == "Enabled" {
+			activeProcessors = append(activeProcessors, proc)
+		}
+	}
+
+
 	info := &data.RedFishInfo{
 		Chassis:            chassis[0],
 		System:             system,
 		Bios:               bios,
-		Processors:         processors,
+		Processors:         activeProcessors,
 		Memory:             memory,
 		EthernetInterfaces: ethernetDevices,
 		StorageDevices:     StorageDevices,
