@@ -24,7 +24,6 @@ func GetRedFishInfo(address string) (*data.RedFishInfo, error) {
 	ethernetDevices, _ := system.EthernetInterfaces()
 	StorageDevices, _ := system.SimpleStorages()
 
-
 	// Filter processors to active sockets only
 	var activeProcessors []*redfish.Processor
 	for _, proc := range processors {
@@ -32,7 +31,6 @@ func GetRedFishInfo(address string) (*data.RedFishInfo, error) {
 			activeProcessors = append(activeProcessors, proc)
 		}
 	}
-
 
 	info := &data.RedFishInfo{
 		Chassis:            chassis[0],

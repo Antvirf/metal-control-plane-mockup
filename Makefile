@@ -2,6 +2,9 @@
 containers:
 	cd compose && docker compose up --build
 
+.PHONY: fmt
+fmt:
+	go fmt ./...
 
 .PHONY: wipe
 wipe:

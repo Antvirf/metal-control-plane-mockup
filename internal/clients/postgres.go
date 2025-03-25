@@ -22,8 +22,8 @@ func WriteHardwareInfo(input data.HardwareInfo) (string, error) {
 	query := sql.New(conn)
 
 	record, err := query.CreateHardwareInfo(context.Background(), sql.CreateHardwareInfoParams{
-		Bmcmac:  input.BmcMacAddress.String(),
-		Info: input,
+		Bmcmac: input.BmcMacAddress.String(),
+		Info:   input,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "No match found: %v\n", err)
