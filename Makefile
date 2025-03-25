@@ -19,4 +19,4 @@ generate:
 
 .PHONY: migrate
 migrate:
-	cat ./internal/schema.sql | docker exec cp_postgres psql -U controlplane -d controlplane -c
+	docker exec cp_postgres bash -c 'psql -U controlplane -d controlplane -f /mnt/internal/schema.sql'

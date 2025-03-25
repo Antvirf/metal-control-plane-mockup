@@ -2,7 +2,6 @@ version: "3.5"
 services:
   pixiecore:
     container_name: pixiecore
-    #image: docker.io/pixiecore/pixiecore:master
     command: "api http://localhost:8081 --log-timestamps --debug"
     build:
       context: .
@@ -24,6 +23,7 @@ services:
       - 5432:5432
     volumes:
       - /var/lib/postgresql/data # no persistence
+      - ../internal/:/mnt/internal
 
   # Everything below is from temporal/docker-compose.git
   postgresql:
