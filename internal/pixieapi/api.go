@@ -69,7 +69,9 @@ func findConfig(mac net.HardwareAddr) (ServerType, ServerConfigResponse, error) 
 
 	// Implementation #2: Get machine info from DB, and then figure out what boot configs
 	// the machine should get based on its hardware configuration.
-	hardwareInfo, found, err := clients.GetHardwareInfo(mac)
+	// Note that this lookup is by the MAC address of the *booting* machine, which
+	// will be one of the NICs of the server - *NOT* the BMC MAC address.
+	hardwareInfo, found, err := clients.GetHardwareInfoByServerMac(mac)
 	if err != nil {
 		// In case of an actual error, return "IGNORE"
 		return IGNORE, ServerConfigResponse{}, fmt.Errorf("error querying db: %v", err)
@@ -114,7 +116,10 @@ func pixieApiHandler(writer http.ResponseWriter, request *http.Request) {
 
 	// Figure out which boot config to serve
 	serverType, config, err := findConfig(macAddress)
-	log.Printf("Serving boot config of type '%s' for %s", serverType, filepath.Base(request.URL.Path))
+	if err != nil {
+		log.Printf("[%s] error looking up config for server: %v", macAddressRaw, err)
+	}
+	log.Printf("[%s] serving boot config of type '%s'", macAddressRaw, serverType)
 	if err := json.NewEncoder(writer).Encode(&config); err != nil {
 		panic(err)
 	}

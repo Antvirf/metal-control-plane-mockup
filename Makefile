@@ -13,7 +13,7 @@ worker:
 
 .PHONY: control-plane
 control-plane:
-	go run main.go -mode controlplane
+	go run main.go -mode control-plane
 
 .PHONY: generate
 generate:

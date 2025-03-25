@@ -1,4 +1,4 @@
 CREATE TABLE hardwareinfo (
-  mac  text PRIMARY KEY,
+  bmcMac  text PRIMARY KEY,
   info jsonb NOT NULL
 );

@@ -2,12 +2,6 @@
 
 Basic implementation of [Railway](https://railway.app) ["Zero-Touch Bare Metal at Scale](https://blog.railway.com/p/data-center-build-part-two) article using Go with Temporal for workflow orchestration, Pixiecore for booting, and UniFi for basic network queries.
 
-## TODO
-
-- Deal with the fact that BMC address != booting address of the machine. We need to get this info from redfish data
-- Create docs on launching workflows in Temporal UI
-- Implement RedFish auth
-
 ## Sequence Diagram
 
 The 'bare metal' server in this case can be two separate machines (e.g., VMs) for the purposes of simulating a real server with a BMC.

@@ -22,7 +22,7 @@ func WriteHardwareInfo(input data.HardwareInfo) (string, error) {
 	query := sql.New(conn)
 
 	record, err := query.CreateHardwareInfo(context.Background(), sql.CreateHardwareInfoParams{
-		Mac:  input.BmcMacAddress.String(),
+		Bmcmac:  input.BmcMacAddress.String(),
 		Info: input,
 	})
 	if err != nil {
@@ -31,10 +31,10 @@ func WriteHardwareInfo(input data.HardwareInfo) (string, error) {
 	}
 
 	log.Printf("Wrote hardware info to DB for BmcMac '%s'", input.BmcMacAddress.String())
-	return record.Mac, nil
+	return record.Bmcmac, nil
 }
 
-func GetHardwareInfo(mac net.HardwareAddr) (*data.HardwareInfo, bool, error) {
+func GetHardwareInfoByServerMac(mac net.HardwareAddr) (*data.HardwareInfo, bool, error) {
 	conn, err := pgx.Connect(context.Background(), DATABASE_CONNECTION_STRING)
 	if err != nil {
 		return &data.HardwareInfo{}, false, fmt.Errorf("unable to connect to database: %v", err)
@@ -43,7 +43,9 @@ func GetHardwareInfo(mac net.HardwareAddr) (*data.HardwareInfo, bool, error) {
 
 	query := sql.New(conn)
 
-	record, err := query.GetHardwareInfo(context.Background(), mac.String())
+	// This look up is with the MAC of the *booting* machine, which will not be
+	// the same MAC as that of the BMC.
+	record, err := query.GetHardwareInfoByEthernetInterfaceMacAddresses(context.Background(), mac.String())
 	if err != nil {
 		return &data.HardwareInfo{}, false, nil
 	}

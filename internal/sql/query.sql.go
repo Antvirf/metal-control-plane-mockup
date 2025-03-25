@@ -12,33 +12,79 @@ import (
 )
 
 const createHardwareInfo = `-- name: CreateHardwareInfo :one
-INSERT INTO hardwareinfo (mac, info)
+INSERT INTO hardwareinfo (bmcMac, info)
 VALUES ($1, $2)
-ON CONFLICT(mac)
+ON CONFLICT(bmcMac)
 DO UPDATE SET info = EXCLUDED.info
-RETURNING mac, info
+RETURNING bmcmac, info
 `
 
 type CreateHardwareInfoParams struct {
-	Mac  string            `json:"mac"`
-	Info data.HardwareInfo `json:"info"`
+	Bmcmac string            `json:"bmcmac"`
+	Info   data.HardwareInfo `json:"info"`
 }
 
 func (q *Queries) CreateHardwareInfo(ctx context.Context, arg CreateHardwareInfoParams) (Hardwareinfo, error) {
-	row := q.db.QueryRow(ctx, createHardwareInfo, arg.Mac, arg.Info)
+	row := q.db.QueryRow(ctx, createHardwareInfo, arg.Bmcmac, arg.Info)
 	var i Hardwareinfo
-	err := row.Scan(&i.Mac, &i.Info)
+	err := row.Scan(&i.Bmcmac, &i.Info)
 	return i, err
 }
 
-const getHardwareInfo = `-- name: GetHardwareInfo :one
-SELECT mac, info from hardwareinfo
-WHERE mac = $1 LIMIT 1
+const getHardwareInfoByBmcMacAddress = `-- name: GetHardwareInfoByBmcMacAddress :one
+SELECT bmcmac, info from hardwareinfo
+WHERE bmcMac = $1 LIMIT 1
 `
 
-func (q *Queries) GetHardwareInfo(ctx context.Context, mac string) (Hardwareinfo, error) {
-	row := q.db.QueryRow(ctx, getHardwareInfo, mac)
+func (q *Queries) GetHardwareInfoByBmcMacAddress(ctx context.Context, bmcmac string) (Hardwareinfo, error) {
+	row := q.db.QueryRow(ctx, getHardwareInfoByBmcMacAddress, bmcmac)
 	var i Hardwareinfo
-	err := row.Scan(&i.Mac, &i.Info)
+	err := row.Scan(&i.Bmcmac, &i.Info)
 	return i, err
+}
+
+const getHardwareInfoByEthernetInterfaceMacAddresses = `-- name: GetHardwareInfoByEthernetInterfaceMacAddresses :one
+SELECT bmcMac, info
+FROM hardwareinfo
+WHERE EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(info->'RedFishData'->'EthernetInterfaces') AS interface
+    WHERE LOWER(interface->>'MACAddress') = LOWER($1)
+)
+`
+
+func (q *Queries) GetHardwareInfoByEthernetInterfaceMacAddresses(ctx context.Context, lower string) (Hardwareinfo, error) {
+	row := q.db.QueryRow(ctx, getHardwareInfoByEthernetInterfaceMacAddresses, lower)
+	var i Hardwareinfo
+	err := row.Scan(&i.Bmcmac, &i.Info)
+	return i, err
+}
+
+const getServerEthernetInterfaceMacAddressesByBmcMacAddress = `-- name: GetServerEthernetInterfaceMacAddressesByBmcMacAddress :many
+SELECT 
+  interface->>'MACAddress'
+FROM                                       
+  hardwareinfo,
+  jsonb_array_elements(info->'RedFishData'->'EthernetInterfaces') AS interface
+WHERE bmcMac = $1
+`
+
+func (q *Queries) GetServerEthernetInterfaceMacAddressesByBmcMacAddress(ctx context.Context, bmcmac string) ([]interface{}, error) {
+	rows, err := q.db.Query(ctx, getServerEthernetInterfaceMacAddressesByBmcMacAddress, bmcmac)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []interface{}
+	for rows.Next() {
+		var column_1 interface{}
+		if err := rows.Scan(&column_1); err != nil {
+			return nil, err
+		}
+		items = append(items, column_1)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

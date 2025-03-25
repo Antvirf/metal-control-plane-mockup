@@ -9,6 +9,6 @@ import (
 )
 
 type Hardwareinfo struct {
-	Mac  string            `json:"mac"`
-	Info data.HardwareInfo `json:"info"`
+	Bmcmac string            `json:"bmcmac"`
+	Info   data.HardwareInfo `json:"info"`
 }
