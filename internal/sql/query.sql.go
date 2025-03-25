@@ -13,7 +13,10 @@ import (
 
 const createHardwareInfo = `-- name: CreateHardwareInfo :one
 INSERT INTO hardwareinfo (mac, info)
-VALUES ($1, $2) RETURNING mac, info
+VALUES ($1, $2)
+ON CONFLICT(mac)
+DO UPDATE SET info = EXCLUDED.info
+RETURNING mac, info
 `
 
 type CreateHardwareInfoParams struct {
