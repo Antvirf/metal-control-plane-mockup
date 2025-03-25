@@ -1,6 +1,8 @@
 # 'Metal Control Plane' POC mockup with Temporal
 
-Basic implementation of [Railway](https://railway.app) ["Zero-Touch Bare Metal at Scale](https://blog.railway.com/p/data-center-build-part-two) article using Go with Temporal for workflow orchestration, Pixiecore for booting, and UniFi for basic network queries.
+Basic implementation of [Railway's](https://railway.app) ["Zero-Touch Bare Metal at Scale"](https://blog.railway.com/p/data-center-build-part-two) article using Go with Temporal for workflow orchestration, Pixiecore for booting, and UniFi for basic network queries.
+
+'Onboard' a bare-metal server by providing its [BMC](https://www.supermicro.com/en/glossary/baseboard-management-controller) MAC address, and the application finds the machine, scrapes its [RedFish API](https://www.dmtf.org/standards/redfish) for hardware details, and persists them in a DB. When that bare-metal server is then started up, it is PXE-booted straight to a Linux installer specified by this application based on the configuration of that server.
 
 ## Sequence Diagram
 
@@ -10,7 +12,7 @@ The 'bare metal' server in this case can be two separate machines (e.g., VMs) fo
 sequenceDiagram
 
 actor Admin
-participant Control Plane
+participant Control Plane & Pixiecore
 participant Temporal Core
 participant Temporal Worker
 participant Router
@@ -21,8 +23,8 @@ alt "Machine onboarding flow"
 Admin->>Temporal Core: Initiate machine 'onboarding' request of MAC 1 through CLI
 Temporal Core->>Temporal Worker: Start 'onboarding workflow
 Temporal Worker->>Router: Activity: Check what IP corresponds to MAC 1
-Temporal Worker->>Server BMC: Scrape RedFish REST API provided by BMC on given IP
-Temporal Worker->>Control Plane: Store server data from RedFish to Control Plane DB
+Temporal Worker->>Server BMC: Activity: Scrape RedFish REST API provided by BMC on given IP
+Temporal Worker->>Control Plane: Activity: Store server data from RedFish to Control Plane DB
 end
 
 alt "Machine OS boot and install workflow"
@@ -54,14 +56,17 @@ end
 1. Configure `.env` with credentials to UniFi router
 1. `make containers` - spins up Temporal backend and pixiecore
 1. `make worker` - run a Temporal worker
-1. Initiate onboarding with `go run main.go onboard $MAC`
+1. `make migrate` - prepare control plane DB
+1. Initiate onboarding with `go run main.go onboard $MAC` - with the MAC of your 'BMC' host.
 
 This 'onboards' the new machine to the control plane database, with a given hardware config and MAC addresses.
 
 ## Workflow #2 - Provisioning/netbooting
 
+1. Configure `.env.` and run `source .env` in all terminals used to run these commands
 1. `make containers` - make sure all containers are up
 1. `make control-plane` - run the control plane API
-1. Trigger boot - power on a VM for example
+1. Create a VM, and give it a MAC address of `12:44:6A:3B:04:11` - this is one of the defaults used in the RedFish emulator.
+1. Trigger boot - power on that VM, and it will boot into a CentOS installer, as defined by the selection logic [here](./internal/pixieapi/api.go) to choose the server type, and the [configurations here](./internal/pixieapi/servertype_config.go) to specify boot options.
 
-The VM will talk to Pixiecore, which in turn asks the control plane which configs to give to the newly booting machine. This config will be provided based on the knowledge the control plane has in its database, given what the onboarding workflow scraped from RedFish.
+The VM will talk to Pixiecore, which in turn asks the control plane which configs to give to the newly booting machine with MAC `12:44:6A:3B:04:11`. The control plane DB has this MAC, since you onboarded the server whose RedFish API returned this MAC address.
