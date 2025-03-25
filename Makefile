@@ -3,6 +3,10 @@ containers:
 	cd compose && docker compose up --build
 
 
+.PHONY: wipe
+wipe:
+	cd compose && docker compose down --volumes
+
 .PHONY: worker
 worker:
 	go run main.go -mode worker
